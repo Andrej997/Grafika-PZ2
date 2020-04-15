@@ -13,10 +13,7 @@ namespace PZ2.Model
         private double x;
         private double y;
 
-        public PowerEntity()
-        {
-
-        }
+        public PowerEntity() { }
 
         public long Id
         {

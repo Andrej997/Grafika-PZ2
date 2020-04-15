@@ -6,7 +6,11 @@
         xmlns:local="clr-namespace:PZ2"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Canvas Name="drawCanvas" Height="3000" Width="3000">
+            <Canvas.RenderTransform>
+                <TranslateTransform Y="-1"/>
+            </Canvas.RenderTransform>
+        </Canvas>
+    </ScrollViewer>
 </Window>

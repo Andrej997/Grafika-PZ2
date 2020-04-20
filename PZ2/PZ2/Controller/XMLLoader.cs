@@ -15,10 +15,18 @@ using Pen = System.Drawing.Pen;
 using Point = PZ2.Model.Point;
 using Size = System.Drawing.Size;
 
+using PZ2.DataContainers;
+
 namespace PZ2.Controller
 {
-    public class XMLLoader
+    /// <summary>
+    /// nasledio sam je, jer sam stavio da 
+    /// liste budu protekted kako ne bi moglo
+    /// da se pristupi iz neke druge klase.
+    /// </summary>
+    public class XMLLoader : Containers 
     {
+        private static XmlDocument xmlDoc;
         public static double noviX, noviY;
         /// <summary>
         /// Automaticly load Geographic.xml
@@ -27,16 +35,37 @@ namespace PZ2.Controller
         public static void LoadXml()
         {
             #region Path to .xml
-            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc = new XmlDocument();
             xmlDoc.Load("../../GeographicData/Geographic.xml");
             XmlNodeList nodeList;
             #endregion
 
             #region Substations
-            List<SubstationEntity> substationEntities = new List<SubstationEntity>(); // 67
+            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Substations/SubstationEntity");
+            LoadSubstationEntities(nodeList);
+            #endregion 
+
+            #region Nodes
+            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Nodes/NodeEntity");
+            LoadNodeEntities(nodeList);
+            #endregion
+
+            #region Switches
+            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Switches/SwitchEntity");
+            LoadSwitcheEntities(nodeList);
+            #endregion
+
+            #region Lines
+            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Lines/LineEntity");
+            LoadLineEntities(nodeList);
+            #endregion
+        }
+
+        #region Entity Loaders
+        private static void LoadSubstationEntities(XmlNodeList nodeList)
+        {
             SubstationEntity sub = new SubstationEntity();
 
-            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Substations/SubstationEntity");
             foreach (XmlNode node in nodeList)
             {
                 sub.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
@@ -48,13 +77,11 @@ namespace PZ2.Controller
 
                 substationEntities.Add(sub);
             }
-            #endregion 
-
-            #region Nodes
-            List<NodeEntity> nodeEntities = new List<NodeEntity>(); // 2043
+        }
+        private static void LoadNodeEntities(XmlNodeList nodeList)
+        {
             NodeEntity n = new NodeEntity();
 
-            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Nodes/NodeEntity");
             foreach (XmlNode node in nodeList)
             {
                 n.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
@@ -66,13 +93,10 @@ namespace PZ2.Controller
 
                 nodeEntities.Add(n);
             }
-            #endregion
-
-            #region Switches
-            List<SwitchEntity> switchEntities = new List<SwitchEntity>(); // 2282
+        }
+        private static void LoadSwitcheEntities(XmlNodeList nodeList)
+        {
             SwitchEntity s = new SwitchEntity();
-
-            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Switches/SwitchEntity");
             foreach (XmlNode node in nodeList)
             {
                 s.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
@@ -84,14 +108,10 @@ namespace PZ2.Controller
 
                 switchEntities.Add(s);
             }
-            #endregion
-
-            #region Lines
-            List<LineEntity> lineEntities = new List<LineEntity>(); // 2336
+        }
+        private static void LoadLineEntities(XmlNodeList nodeList)
+        {
             LineEntity l = new LineEntity();
-            List<Point> pointsFromLines = new List<Point>(); // 8747
-
-            nodeList = xmlDoc.DocumentElement.SelectNodes("/NetworkModel/Lines/LineEntity");
             foreach (XmlNode node in nodeList)
             {
                 l.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
@@ -125,9 +145,9 @@ namespace PZ2.Controller
                     pointsFromLines.Add(p);
                 }
             }
-            #endregion
         }
-
+        #endregion
+        
         //From UTM to Latitude and longitude in decimal
         public static void ToLatLon(double utmX, double utmY, int zoneUTM, out double latitude, out double longitude)
         {

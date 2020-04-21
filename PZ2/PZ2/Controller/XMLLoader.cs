@@ -16,6 +16,7 @@ using Point = PZ2.Model.Point;
 using Size = System.Drawing.Size;
 
 using PZ2.DataContainers;
+using System.Windows.Shapes;
 
 namespace PZ2.Controller
 {
@@ -27,11 +28,22 @@ namespace PZ2.Controller
     public class XMLLoader : Containers 
     {
         private static XmlDocument xmlDoc;
-        public static double noviX, noviY;
+
+        /// <summary>
+        /// tacka najbliza koordinatnom pocetku
+        /// </summary>
+        private static double closestX;
+        private static double closestY;
+
+        /// <summary>
+        /// tacka najdalja koordinatnom pocetku
+        /// </summary>
+        private static double farthestX;
+        private static double farthestY;
+
         /// <summary>
         /// Automaticly load Geographic.xml
         /// </summary>
-        /// 
         public static void LoadXml()
         {
             #region Path to .xml
@@ -64,56 +76,49 @@ namespace PZ2.Controller
         #region Entity Loaders
         private static void LoadSubstationEntities(XmlNodeList nodeList)
         {
-            SubstationEntity sub = new SubstationEntity();
-
             foreach (XmlNode node in nodeList)
             {
+                SubstationEntity sub = new SubstationEntity();
                 sub.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
                 sub.Name = node.SelectSingleNode("Name").InnerText;
                 sub.X = double.Parse(node.SelectSingleNode("X").InnerText);
                 sub.Y = double.Parse(node.SelectSingleNode("Y").InnerText);
-
-                ToLatLon(sub.X, sub.Y, 34, out noviX, out noviY);
 
                 substationEntities.Add(sub);
             }
         }
         private static void LoadNodeEntities(XmlNodeList nodeList)
         {
-            NodeEntity n = new NodeEntity();
-
             foreach (XmlNode node in nodeList)
             {
+                NodeEntity n = new NodeEntity();
                 n.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
                 n.Name = node.SelectSingleNode("Name").InnerText;
                 n.X = double.Parse(node.SelectSingleNode("X").InnerText);
                 n.Y = double.Parse(node.SelectSingleNode("Y").InnerText);
-
-                ToLatLon(n.X, n.Y, 34, out noviX, out noviY);
 
                 nodeEntities.Add(n);
             }
         }
         private static void LoadSwitcheEntities(XmlNodeList nodeList)
         {
-            SwitchEntity s = new SwitchEntity();
             foreach (XmlNode node in nodeList)
             {
+                SwitchEntity s = new SwitchEntity();
                 s.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
                 s.Name = node.SelectSingleNode("Name").InnerText;
+                s.Status = node.SelectSingleNode("Status").InnerText;
                 s.X = double.Parse(node.SelectSingleNode("X").InnerText);
                 s.Y = double.Parse(node.SelectSingleNode("Y").InnerText);
-
-                ToLatLon(s.X, s.Y, 34, out noviX, out noviY);
 
                 switchEntities.Add(s);
             }
         }
         private static void LoadLineEntities(XmlNodeList nodeList)
         {
-            LineEntity l = new LineEntity();
             foreach (XmlNode node in nodeList)
             {
+                LineEntity l = new LineEntity();
                 l.Id = long.Parse(node.SelectSingleNode("Id").InnerText);
                 l.Name = node.SelectSingleNode("Name").InnerText;
                 if (node.SelectSingleNode("IsUnderground").InnerText.Equals("true"))
@@ -140,14 +145,347 @@ namespace PZ2.Controller
                     p.X = double.Parse(pointNode.SelectSingleNode("X").InnerText);
                     p.Y = double.Parse(pointNode.SelectSingleNode("Y").InnerText);
 
-                    ToLatLon(p.X, p.Y, 34, out noviX, out noviY);
-
                     pointsFromLines.Add(p);
                 }
             }
         }
         #endregion
-        
+
+        #region Get closest and farthest point from (0,0)
+        private static void GetClosestPoint(out double closestX, out double closestY)
+        {
+            closestX = 1000;
+            closestY = 1000;
+            double latitude;
+            double longitude;
+            foreach (var item in substationEntities)
+            {
+                ToLatLon(item.X, item.Y, 34, out latitude, out longitude);
+                if (latitude < closestX)
+                    closestX = latitude;
+                if (longitude < closestY)
+                    closestY = longitude;
+            }
+            foreach (var item in nodeEntities)
+            {
+                ToLatLon(item.X, item.Y, 34, out latitude, out longitude);
+                if (latitude < closestX)
+                    closestX = latitude;
+                if (longitude < closestY)
+                    closestY = longitude;
+            }
+            foreach (var item in switchEntities)
+            {
+                ToLatLon(item.X, item.Y, 34, out latitude, out longitude);
+                if (latitude < closestX)
+                    closestX = latitude;
+                if (longitude < closestY)
+                    closestY = longitude;
+            }
+        }
+        private static void GetFarthestPoint(out double farthestX, out double farthestY)
+        {
+            farthestX = 0;
+            farthestY = 0;
+            double latitude;
+            double longitude;
+            foreach (var item in substationEntities)
+            {
+                ToLatLon(item.X, item.Y, 34, out latitude, out longitude);
+                if (latitude > farthestX)
+                    farthestX = latitude;
+                if (longitude > farthestY)
+                    farthestY = longitude;
+            }
+            foreach (var item in nodeEntities)
+            {
+                ToLatLon(item.X, item.Y, 34, out latitude, out longitude);
+                if (latitude > farthestX)
+                    farthestX = latitude;
+                if (longitude > farthestY)
+                    farthestY = longitude;
+            }
+            foreach (var item in switchEntities)
+            {
+                ToLatLon(item.X, item.Y, 34, out latitude, out longitude);
+                if (latitude > farthestX)
+                    farthestX = latitude;
+                if (longitude > farthestY)
+                    farthestY = longitude;
+            }
+        }
+        #endregion
+
+        #region Insert in entityMatrix
+        private static void InsertInEM(double x, double y, AllPurpuseEntity allPurpuseEntity)
+        {
+            double latitude = 0;
+            double longitude = 0;
+            ToLatLon(x, y, 34, out latitude, out longitude);
+
+            double XSpot = ((latitude - closestX) / (farthestX - closestX)) * (MainWindow.CanvasData().Item2 - 1);
+            double YSpot = ((longitude - closestY) / (farthestY - closestY)) * (MainWindow.CanvasData().Item1 - 1);
+
+            XSpot = XSpot - XSpot % MainWindow.CanvasData().Item3;
+            YSpot = YSpot - YSpot % MainWindow.CanvasData().Item3;
+
+            if (entityMatrix[(int)XSpot, (int)YSpot] == null)
+            {
+                entityMatrix[(int)XSpot, (int)YSpot] = allPurpuseEntity;
+            }
+            else
+            {
+                bool find = false;
+                bool end = false;
+                int levelElements = 3;
+                int level = 1;
+
+                while (find == false && end == false)
+                {
+
+                    int searchX = 0;
+                    if (XSpot != 0)
+                    {
+                        searchX = (int)XSpot - level;
+                    }
+                    int searchY = 0;
+                    if (YSpot != 0)
+                    {
+                        searchY = (int)YSpot - level;
+                    }
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        if (entityMatrix[searchX + i, searchY] == null)
+                        {
+                            find = true;
+                            entityMatrix[searchX + i, searchY] = allPurpuseEntity;
+                            break;
+                        }
+                    }
+
+                    if (find)
+                        break;
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        if (entityMatrix[searchX, searchY + i] == null)
+                        {
+                            find = true;
+                            entityMatrix[searchX, searchY + i] = allPurpuseEntity;
+                            break;
+                        }
+                    }
+
+                    if (find)
+                        break;
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        if (entityMatrix[searchX + i, searchY + levelElements - 1] == null)
+                        {
+                            find = true;
+                            entityMatrix[searchX + i, searchY + levelElements - 1] = allPurpuseEntity;
+                            break;
+                        }
+                    }
+
+                    if (find)
+                        break;
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        if (entityMatrix[searchX + levelElements - 1, searchY + i] == null)
+                        {
+                            find = true;
+                            entityMatrix[searchX + levelElements - 1, searchY + i] = allPurpuseEntity;
+                            break;
+                        }
+                    }
+
+                    if (find)
+                        break;
+
+
+                    levelElements += 2;
+                    level++;
+                }
+            }
+        }
+        private static long GetID(AllPurpuseEntity allPurpuseEntity)
+        {
+            if (allPurpuseEntity.Entity != null)
+                return allPurpuseEntity.Entity.Id;
+            else
+                return allPurpuseEntity.LineEntity.Id;
+        }
+        private static void InsertLinesInEM()
+        {
+            foreach (var line in lineEntities)
+            {
+                long startID = line.FirstEnd;
+                long finishID = line.SecondEnd;
+                int startRow = 0; // X je red
+                int startCol = 0; // Y je kolona
+                int finishRow = 0;
+                int finishCol = 0;
+
+                for (int i = 0; i < MainWindow.CanvasData().Item1; i++)
+                {
+                    for (int j = 0; j < MainWindow.CanvasData().Item2; j++)
+                    {
+                        if (EntityMatrix[i, j] != null)
+                        {
+                            if (GetID(EntityMatrix[i, j]) == startID)
+                            {
+                                startRow = i;
+                                startCol = j;
+                            }
+                        }
+                        if (EntityMatrix[i, j] != null)
+                        {
+                            if (GetID(EntityMatrix[i, j]) == finishID)
+                            {
+                                finishRow = i;
+                                finishCol = j;
+                            }
+                        }
+                    }
+                }
+
+                if (startRow <= finishRow && startCol >= finishCol) // red | a kolona --
+                {
+                    for (int i = startRow; i <= finishRow; i++)
+                    {
+                        if (EntityMatrix[i, startCol] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[i, startCol] = allPurpuseEntity;
+                        }
+                    }
+
+                    for (int i = finishCol; i <= startCol; i++)
+                    {
+                        if (EntityMatrix[finishRow, i] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[finishRow, i] = allPurpuseEntity;
+                        }
+                    }
+                }
+
+                if (startRow <= finishRow && startCol < finishCol) // red | a kolona --
+                {
+                    for (int i = startRow; i <= finishRow; i++)
+                    {
+                        if (EntityMatrix[i, finishCol] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[i, finishCol] = allPurpuseEntity;
+                        }
+                    }
+
+                    for (int i = startCol; i <= finishCol; i++)
+                    {
+                        if (EntityMatrix[startRow, i] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[startRow, i] = allPurpuseEntity;
+                        }
+                    }
+                }
+
+                if (startRow > finishRow && startCol < finishCol) // red | a kolona --
+                {
+                    for (int i = finishRow; i <= startRow; i++)
+                    {
+                        if (EntityMatrix[i, startCol] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[i, startCol] = allPurpuseEntity;
+                        }
+                    }
+
+                    for (int i = startCol; i <= finishCol; i++)
+                    {
+                        if (EntityMatrix[finishRow, i] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[finishRow, i] = allPurpuseEntity;
+                        }
+                    }
+                }
+
+                if (startRow > finishRow && startCol >= finishCol) // red | a kolona --
+                {
+                    for (int i = finishRow; i <= startRow; i++)
+                    {
+                        if (EntityMatrix[i, startCol] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[i, startCol] = allPurpuseEntity;
+                        }
+                    }
+
+                    for (int i = finishCol; i <= startCol; i++)
+                    {
+                        if (EntityMatrix[finishRow, i] == null)
+                        {
+                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
+                            EntityMatrix[finishRow, i] = allPurpuseEntity;
+                        }
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region Set all entities in one big canvas matrix
+        public static void SetAll()
+        {
+            GetClosestPoint(out closestX, out closestY);
+            GetFarthestPoint(out farthestX, out farthestY);
+            foreach (var item in substationEntities)
+            {
+                InsertInEM(
+                    item.X,
+                    item.Y,
+                    new AllPurpuseEntity(
+                        item,
+                        EntityType.Substation,
+                        System.Windows.Media.Brushes.Blue
+                        )
+                    );
+            }
+            //foreach (var item in nodeEntities)
+            //{
+            //    InsertInEM(
+            //        item.X,
+            //        item.Y,
+            //        new AllPurpuseEntity(
+            //            item,
+            //            EntityType.Node,
+            //            System.Windows.Media.Brushes.Red
+            //            )
+            //        );
+            //}
+            //foreach (var item in switchEntities)
+            //{
+            //    InsertInEM(
+            //        item.X,
+            //        item.Y,
+            //        new AllPurpuseEntity(
+            //            item,
+            //            EntityType.Switch,
+            //            System.Windows.Media.Brushes.Green
+            //            )
+            //        );
+            //}
+            InsertLinesInEM();
+        }
+        #endregion
+
+        #region Converter
         //From UTM to Latitude and longitude in decimal
         public static void ToLatLon(double utmX, double utmY, int zoneUTM, out double latitude, out double longitude)
         {
@@ -189,5 +527,6 @@ namespace PZ2.Controller
             longitude = ((delt * (180.0 / Math.PI)) + s) + diflon;
             latitude = ((lat + (1 + e2cuadrada * Math.Pow(Math.Cos(lat), 2) - (3.0 / 2.0) * e2cuadrada * Math.Sin(lat) * Math.Cos(lat) * (tao - lat)) * (tao - lat)) * (180.0 / Math.PI)) + diflat;
         }
+        #endregion
     }
 }

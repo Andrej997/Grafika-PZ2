@@ -70,6 +70,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Controller\BFS.cs" />
     <Compile Include="Controller\XMLLoader.cs" />
     <Compile Include="DataContainers\Containers.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -78,6 +79,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\AllPurpuseEntity.cs" />
     <Compile Include="Model\LineEntity.cs" />
     <Compile Include="Model\NodeEntity.cs" />
     <Compile Include="Model\Point.cs" />

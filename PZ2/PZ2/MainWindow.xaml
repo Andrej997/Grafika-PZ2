@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <Canvas Name="drawCanvas" Height="3000" Width="3000">
+        <Canvas Name="pz2Canvas" Height="1500" Width="1500">
             <Canvas.RenderTransform>
                 <TranslateTransform Y="-1"/>
             </Canvas.RenderTransform>

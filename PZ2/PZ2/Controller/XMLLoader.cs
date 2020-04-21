@@ -457,30 +457,30 @@ namespace PZ2.Controller
                         )
                     );
             }
-            //foreach (var item in nodeEntities)
-            //{
-            //    InsertInEM(
-            //        item.X,
-            //        item.Y,
-            //        new AllPurpuseEntity(
-            //            item,
-            //            EntityType.Node,
-            //            System.Windows.Media.Brushes.Red
-            //            )
-            //        );
-            //}
-            //foreach (var item in switchEntities)
-            //{
-            //    InsertInEM(
-            //        item.X,
-            //        item.Y,
-            //        new AllPurpuseEntity(
-            //            item,
-            //            EntityType.Switch,
-            //            System.Windows.Media.Brushes.Green
-            //            )
-            //        );
-            //}
+            foreach (var item in nodeEntities)
+            {
+                InsertInEM(
+                    item.X,
+                    item.Y,
+                    new AllPurpuseEntity(
+                        item,
+                        EntityType.Node,
+                        System.Windows.Media.Brushes.Red
+                        )
+                    );
+            }
+            foreach (var item in switchEntities)
+            {
+                InsertInEM(
+                    item.X,
+                    item.Y,
+                    new AllPurpuseEntity(
+                        item,
+                        EntityType.Switch,
+                        System.Windows.Media.Brushes.Green
+                        )
+                    );
+            }
             InsertLinesInEM();
         }
         #endregion

@@ -39,8 +39,6 @@ namespace PZ2
 
             Controller.XMLLoader.SetAll();
 
-            //DataContainers.Containers.GetSubstations;
-
             DrawCircle();
         }
 

@@ -321,8 +321,10 @@ namespace PZ2.Controller
         }
         private static void InsertLinesInEM()
         {
+            //int elementNum = 0;
             foreach (var line in lineEntities)
             {
+                //++elementNum;
                 long startID = line.FirstEnd;
                 long finishID = line.SecondEnd;
                 int startRow = 0; // X je red

@@ -32,7 +32,7 @@ namespace PZ2.Model
             ColorBrush = colorBrush;
         }
 
-        public AllPurpuseEntity(LineEntity lineEntity, EntityType typeE, Brush brush)
+        public AllPurpuseEntity(LineEntity lineEntity, EntityType typeE, Brush colorBrush)
         {
             LineEntity = lineEntity;
             TypeE = typeE;

@@ -20,13 +20,17 @@ namespace PZ2.Model
     /// </summary>
     public class AllPurpuseEntity
     {
+        private long id;
+        private int x;
+        private int y;
         private PowerEntity entity; // moze ovaj tip da bude zbog nasledjivanje
         private EntityType typeE;
         private Brush colorBrush;
         private LineEntity lineEntity;
 
-        public AllPurpuseEntity(PowerEntity entity, EntityType typeE, Brush colorBrush)
+        public AllPurpuseEntity(long id, PowerEntity entity, EntityType typeE, Brush colorBrush)
         {
+            Id = id;
             Entity = entity;
             TypeE = typeE;
             ColorBrush = colorBrush;
@@ -62,5 +66,8 @@ namespace PZ2.Model
             get => lineEntity;
             set => lineEntity = value;
         }
+        public long Id { get => id; set => id = value; }
+        public int X { get => x; set => x = value; }
+        public int Y { get => y; set => y = value; }
     }
 }

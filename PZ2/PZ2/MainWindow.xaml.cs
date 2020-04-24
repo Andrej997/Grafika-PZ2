@@ -1,4 +1,5 @@
 ﻿using GMap.NET.MapProviders;
+using PZ2.Controller;
 using PZ2.Model;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -54,53 +56,107 @@ namespace PZ2
         /// </returns>
         public static Tuple<int, int, int> CanvasData() => canvasData;
 
+        private EventTrigger Enlarge10x(double height, double width)
+        {
+            // za sirinu
+            DoubleAnimation doubleAnimation = new DoubleAnimation(width, width*10, new Duration(TimeSpan.FromMilliseconds(800)));
+            doubleAnimation.AutoReverse = true; // vrati na pocetno
+            doubleAnimation.AccelerationRatio = 0.5; // ubzanje
+            Storyboard.SetTargetProperty(doubleAnimation, new PropertyPath("Width"));
+            
+            // za visinu
+            DoubleAnimation doubleAnimation2 = new DoubleAnimation(height, height * 10, new Duration(TimeSpan.FromMilliseconds(800)));
+            doubleAnimation2.AutoReverse = true;
+            Storyboard.SetTargetProperty(doubleAnimation2, new PropertyPath("Height"));
+
+            Storyboard storyboard = new Storyboard();
+            storyboard.Children.Add(doubleAnimation);
+            storyboard.Children.Add(doubleAnimation2);
+
+            BeginStoryboard beginStoryboard = new BeginStoryboard();
+            beginStoryboard.Storyboard = storyboard;
+
+            EventTrigger eventTrigger = new EventTrigger();
+            eventTrigger.RoutedEvent = MouseLeftButtonDownEvent; // na levi klik misa
+            eventTrigger.Actions.Add(beginStoryboard);
+
+            return eventTrigger;
+        }
+
         #region Draw Circles
         private void DrawCircle()
         {
-            for (int i = 0; i < CanvasData().Item1; i++)
+            int num = 0;
+            foreach (var allPurpuseEntity in DataContainers.Containers.AllPurpuseEntities)
             {
-                for (int j = 0; j < CanvasData().Item2; j++)
+                //if (allPurpuseEntity.Id == 41990 || allPurpuseEntity.Id == 41992)
+                //if (allPurpuseEntity.TypeE == Model.EntityType.Node)
                 {
-                    if (DataContainers.Containers.EntityMatrix[i, j] != null)
+                    ++num;
+                    Ellipse ellipse = new Ellipse();
+                    ToolTip toolTip = new ToolTip();
+                    toolTip.Background = Brushes.Black;
+                    toolTip.Foreground = Brushes.ForestGreen;
+                    if (allPurpuseEntity.Entity is PowerEntity)
                     {
-                        Ellipse ellipse = new Ellipse();
-
-                        if (DataContainers.Containers.EntityMatrix[i, j].Entity != null)
-                        {
-                            PowerEntity pE = DataContainers.Containers.EntityMatrix[i, j].Entity;
-                            ellipse.ToolTip = $"{DataContainers.Containers.EntityMatrix[i, j].TypeE.ToString()}\n" +
-                                $"name: {pE.Name}\n" +
-                                $"id: {pE.Id}";
-                            if (pE is SwitchEntity) // ako je nasledjen tip SwitchEntity
-                            {
-                                ellipse.ToolTip += $"\nstatus: {(pE as SwitchEntity).Status}";
-                            }
-                        }
-                        else
-                        {
-                            LineEntity lE = DataContainers.Containers.EntityMatrix[i, j].LineEntity;
-                            ellipse.ToolTip = $"{DataContainers.Containers.EntityMatrix[i, j].TypeE.ToString()}\n" +
-                               $"name: {lE.Name}\n" +
-                               $"id: {lE.Id}";
-                        }
-
-                        ellipse.Width = CanvasData().Item3;
-                        ellipse.Height = CanvasData().Item3;
-                        ellipse.Stroke = DataContainers.Containers.EntityMatrix[i, j].ColorBrush;
-                        ellipse.StrokeThickness = 1;
-                        // ako je LineEntity onda je obojena elipsa
-                        if (DataContainers.Containers.EntityMatrix[i, j].Entity == null)
-                            ellipse.Fill = DataContainers.Containers.EntityMatrix[i, j].ColorBrush;
-                        
-
-                        pz2Canvas.Children.Add(ellipse);
-
-                        Canvas.SetBottom(ellipse, i * CanvasData().Item3);
-                        Canvas.SetLeft(ellipse, j * CanvasData().Item3);
+                        toolTip.Content = $"{allPurpuseEntity.TypeE.ToString()}\n" +
+                                        $"id: {allPurpuseEntity.Entity.Id}\n" +
+                                        $"name: {allPurpuseEntity.Entity.Name}";
+                        if (allPurpuseEntity.Entity is SwitchEntity)
+                            toolTip.Content += $"\nstatus: {(allPurpuseEntity.Entity as SwitchEntity).Status}";
                     }
+                    toolTip.Content += $"\nx : {allPurpuseEntity.X}\ny : {allPurpuseEntity.Y}";
+                    ellipse.ToolTip = toolTip;
+                    ellipse.Width = CanvasData().Item3;
+                    ellipse.Height = CanvasData().Item3;
+                    ellipse.Fill = allPurpuseEntity.ColorBrush;
+                    ellipse.Stroke = allPurpuseEntity.ColorBrush;
+                    ellipse.StrokeThickness = 1;
+                    // animation
+                    ellipse.Triggers.Add(Enlarge10x(ellipse.Height, ellipse.Width));
+
+                    pz2Canvas.Children.Add(ellipse);
+
+                    Canvas.SetBottom(ellipse, allPurpuseEntity.X * CanvasData().Item3);
+                    Canvas.SetLeft(ellipse, allPurpuseEntity.Y * CanvasData().Item3);
                 }
+                
             }
+            
+            //Graph graph = new Graph(DataContainers.Containers.AllPurpuseEntities, DataContainers.Containers.GetLines);
+            //AllPurpuseEntity startVertex = DataContainers.Containers.AllPurpuseEntities.ElementAt(0);
+            //var shortestPath = BFSAlg.ShortestPathFunction(graph, startVertex);
+            //foreach (var vertex in DataContainers.Containers.AllPurpuseEntities)
+            //{
+            //    var nodes = shortestPath(vertex);
+            //    if (nodes != null)
+            //    {
+            //        foreach (var node in nodes)
+            //        {
+            //            Ellipse ellipse = new Ellipse();
+
+            //            ellipse.ToolTip = $"{node.TypeE.ToString()}\n" +
+            //                $"name: {node.Entity.Name}\n" +
+            //                $"id: {node.Entity.Id}";
+            //            if (node.Entity is SwitchEntity) // ako je nasledjen tip SwitchEntity
+            //            {
+            //                ellipse.ToolTip += $"\nstatus: {(node.Entity as SwitchEntity).Status}";
+            //            }
+            //            ellipse.Width = CanvasData().Item3;
+            //            ellipse.Height = CanvasData().Item3;
+            //            ellipse.Stroke = node.ColorBrush;
+            //            ellipse.StrokeThickness = 1;
+
+            //            pz2Canvas.Children.Add(ellipse);
+
+            //            Canvas.SetBottom(ellipse, node.X * CanvasData().Item3);
+            //            Canvas.SetLeft(ellipse, node.Y * CanvasData().Item3);
+            //        }
+            //    }
+            //}
         }
         #endregion
+
+       
     }
 }

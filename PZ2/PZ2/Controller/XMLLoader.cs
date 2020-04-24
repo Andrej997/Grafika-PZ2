@@ -217,108 +217,9 @@ namespace PZ2.Controller
         #endregion
 
         #region Insert in entityMatrix
-        private static void InsertInEM(double x, double y, AllPurpuseEntity allPurpuseEntity)
-        {
-            double latitude = 0;
-            double longitude = 0;
-            ToLatLon(x, y, 34, out latitude, out longitude);
-
-            double XSpot = ((latitude - closestX) / (farthestX - closestX)) * (MainWindow.CanvasData().Item2 - 1);
-            double YSpot = ((longitude - closestY) / (farthestY - closestY)) * (MainWindow.CanvasData().Item1 - 1);
-
-            XSpot = XSpot - XSpot % MainWindow.CanvasData().Item3;
-            YSpot = YSpot - YSpot % MainWindow.CanvasData().Item3;
-
-            if (entityMatrix[(int)XSpot, (int)YSpot] == null)
-            {
-                entityMatrix[(int)XSpot, (int)YSpot] = allPurpuseEntity;
-            }
-            else
-            {
-                bool find = false;
-                bool end = false;
-                int levelElements = 3;
-                int level = 1;
-
-                while (find == false && end == false)
-                {
-
-                    int searchX = 0;
-                    if (XSpot != 0)
-                    {
-                        searchX = (int)XSpot - level;
-                    }
-                    int searchY = 0;
-                    if (YSpot != 0)
-                    {
-                        searchY = (int)YSpot - level;
-                    }
-
-                    for (int i = 0; i < levelElements; i++)
-                    {
-                        if (entityMatrix[searchX + i, searchY] == null)
-                        {
-                            find = true;
-                            entityMatrix[searchX + i, searchY] = allPurpuseEntity;
-                            break;
-                        }
-                    }
-
-                    if (find)
-                        break;
-
-                    for (int i = 0; i < levelElements; i++)
-                    {
-                        if (entityMatrix[searchX, searchY + i] == null)
-                        {
-                            find = true;
-                            entityMatrix[searchX, searchY + i] = allPurpuseEntity;
-                            break;
-                        }
-                    }
-
-                    if (find)
-                        break;
-
-                    for (int i = 0; i < levelElements; i++)
-                    {
-                        if (entityMatrix[searchX + i, searchY + levelElements - 1] == null)
-                        {
-                            find = true;
-                            entityMatrix[searchX + i, searchY + levelElements - 1] = allPurpuseEntity;
-                            break;
-                        }
-                    }
-
-                    if (find)
-                        break;
-
-                    for (int i = 0; i < levelElements; i++)
-                    {
-                        if (entityMatrix[searchX + levelElements - 1, searchY + i] == null)
-                        {
-                            find = true;
-                            entityMatrix[searchX + levelElements - 1, searchY + i] = allPurpuseEntity;
-                            break;
-                        }
-                    }
-
-                    if (find)
-                        break;
-
-
-                    levelElements += 2;
-                    level++;
-                }
-            }
-        }
-        private static long GetID(AllPurpuseEntity allPurpuseEntity)
-        {
-            if (allPurpuseEntity.Entity != null)
-                return allPurpuseEntity.Entity.Id;
-            else
-                return allPurpuseEntity.LineEntity.Id;
-        }
+        
+        private static long GetID(AllPurpuseEntity allPurpuseEntity) 
+            => allPurpuseEntity.Entity != null ? allPurpuseEntity.Entity.Id : allPurpuseEntity.LineEntity.Id;
         private static void InsertLinesInEM()
         {
             //int elementNum = 0;
@@ -443,47 +344,117 @@ namespace PZ2.Controller
         #endregion
 
         #region Set all entities in one big canvas matrix
+
+        private static AllPurpuseEntity SetCoords(AllPurpuseEntity allPurpuseEntity)
+        {
+            ToLatLon(allPurpuseEntity.Entity.X, allPurpuseEntity.Entity.Y, 34, out double latitude, out double longitude);
+
+            double XSpot = ((latitude - closestX) / (farthestX - closestX)) * (MainWindow.CanvasData().Item2 - 1);
+            double YSpot = ((longitude - closestY) / (farthestY - closestY)) * (MainWindow.CanvasData().Item1 - 1);
+
+            XSpot = XSpot - XSpot % MainWindow.CanvasData().Item3;
+            YSpot = YSpot - YSpot % MainWindow.CanvasData().Item3;
+
+            Coord coord = new Coord((int)XSpot, (int)YSpot);
+
+            if(!allCords.Any(i => i.X == coord.X && i.Y == coord.Y))
+            {
+                allCords.Add(coord);
+                
+                allPurpuseEntity.X = (int)XSpot;
+                allPurpuseEntity.Y = (int)YSpot;
+            }
+            else
+            {
+                bool foundedFreeSpot = false;
+                bool end = false;
+                int levelElements = 3;
+                int level = 1;
+                while (foundedFreeSpot == false && end == false)
+                {
+                    int newX = 0;
+                    if (XSpot != 0)
+                        newX = (int)XSpot - level;
+
+                    int newY = 0;
+                    if (YSpot != 0)
+                        newY = (int)YSpot - level;
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        coord.X = newX + i;
+                        coord.Y = newY;
+                        if (!allCords.Any(t => t.X == coord.X && t.Y == coord.Y))
+                        {
+                            allCords.Add(coord);
+
+                            foundedFreeSpot = true;
+                            allPurpuseEntity.X = newX + i;
+                            allPurpuseEntity.Y = newY;
+                            break;
+                        }
+                    }
+                    if (foundedFreeSpot) break;
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        coord.X = newX + i;
+                        coord.Y = newY + levelElements - 1;
+                        if (!allCords.Any(t => t.X == coord.X && t.Y == coord.Y))
+                        {
+                            allCords.Add(coord);
+                            foundedFreeSpot = true;
+                            allPurpuseEntity.X = newX + i;
+                            allPurpuseEntity.Y = newY + levelElements - 1;
+                            break;
+                        }
+                    }
+                    if (foundedFreeSpot) break;
+
+                    for (int i = 0; i < levelElements; i++)
+                    {
+                        coord.X = newX + levelElements - 1;
+                        coord.Y = newY + i;
+                        if (!allCords.Any(t => t.X == coord.X && t.Y == coord.Y))
+                        {
+                            allCords.Add(coord);
+                            foundedFreeSpot = true;
+                            allPurpuseEntity.X = newX + levelElements - 1;
+                            allPurpuseEntity.Y = newY + i;
+                            break;
+                        }
+                    }
+                    if (foundedFreeSpot) break;
+
+                    levelElements += 2;
+                    level++;
+                }
+            }
+            return allPurpuseEntity;
+        }
+
         public static void SetAll()
         {
             GetClosestPoint(out closestX, out closestY);
             GetFarthestPoint(out farthestX, out farthestY);
-            foreach (var item in substationEntities)
-            {
-                InsertInEM(
-                    item.X,
-                    item.Y,
-                    new AllPurpuseEntity(
-                        item,
-                        EntityType.Substation,
-                        System.Windows.Media.Brushes.Blue
-                        )
-                    );
-            }
-            foreach (var item in nodeEntities)
-            {
-                InsertInEM(
-                    item.X,
-                    item.Y,
-                    new AllPurpuseEntity(
-                        item,
-                        EntityType.Node,
-                        System.Windows.Media.Brushes.Red
-                        )
-                    );
-            }
-            foreach (var item in switchEntities)
-            {
-                InsertInEM(
-                    item.X,
-                    item.Y,
-                    new AllPurpuseEntity(
-                        item,
-                        EntityType.Switch,
-                        System.Windows.Media.Brushes.Green
-                        )
-                    );
-            }
-            InsertLinesInEM();
+            foreach (var entity in substationEntities)
+                allPurpuseEntities.Add(SetCoords(new AllPurpuseEntity(entity.Id, entity, EntityType.Substation, System.Windows.Media.Brushes.Blue)));
+            
+            foreach (var entity in nodeEntities)
+                allPurpuseEntities.Add(SetCoords(new AllPurpuseEntity(entity.Id, entity, EntityType.Node, System.Windows.Media.Brushes.Red)));
+
+            foreach (var entity in switchEntities)
+                allPurpuseEntities.Add(SetCoords(new AllPurpuseEntity(entity.Id, entity, EntityType.Switch, System.Windows.Media.Brushes.Green)));
+
+            Graph graph = new Graph(allPurpuseEntities, lineEntities);
+            //var shortestPathFunction_0 = BFSAlg.ShortestPathFunction(graph, allPurpuseEntities.ElementAt(0));
+            //foreach (var node in allPurpuseEntities)
+            //{
+            //    allShortestPathFunction.Add(BFSAlg.ShortestPathFunction(graph, node));
+            //}
+
+            //InsertLinesInEM();
+
         }
         #endregion
 

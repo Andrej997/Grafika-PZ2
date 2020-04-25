@@ -3,6 +3,7 @@ using PZ2.Controller;
 using PZ2.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -43,6 +44,8 @@ namespace PZ2
             Controller.XMLLoader.SetAll();
 
             DrawCircle();
+
+            DrawLine();
         }
 
         /// <summary>
@@ -84,79 +87,279 @@ namespace PZ2
         }
 
         #region Draw Circles
+        private void DrawLine(List<AllPurpuseEntity> path)
+        {
+            //var ellipsesLine = XMLLoader.SetLine(path);
+        }
+        
         private void DrawCircle()
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
             int num = 0;
+            string elapsedTime = "";
             foreach (var allPurpuseEntity in DataContainers.Containers.AllPurpuseEntities)
             {
-                //if (allPurpuseEntity.Id == 41990 || allPurpuseEntity.Id == 41992)
-                //if (allPurpuseEntity.TypeE == Model.EntityType.Node)
+                // za BFS
+                //var connectedNodes = BFSAlg.BFS(DataContainers.Containers.Graph, allPurpuseEntity);
+                //var visitedNodes = BFSAlg.VisitedNodes(DataContainers.Containers.Graph, allPurpuseEntity);
+                //foreach (var visitedNode in visitedNodes)
+                //{
+                //    var path = BFSAlg.Path(connectedNodes, allPurpuseEntity, visitedNode);
+                //    if (path.Count > 1) // necemo da nista da radimo ako nema putanje
+                //        DrawLine(path);
+                //}
+                //
+                
+                ++num;
+                Ellipse ellipse = new Ellipse();
+                ToolTip toolTip = new ToolTip();
+                toolTip.Background = Brushes.Black;
+                toolTip.Foreground = Brushes.ForestGreen;
+                if (allPurpuseEntity.Entity is PowerEntity)
                 {
-                    ++num;
-                    Ellipse ellipse = new Ellipse();
-                    ToolTip toolTip = new ToolTip();
-                    toolTip.Background = Brushes.Black;
-                    toolTip.Foreground = Brushes.ForestGreen;
-                    if (allPurpuseEntity.Entity is PowerEntity)
-                    {
-                        toolTip.Content = $"{allPurpuseEntity.TypeE.ToString()}\n" +
-                                        $"id: {allPurpuseEntity.Entity.Id}\n" +
-                                        $"name: {allPurpuseEntity.Entity.Name}";
-                        if (allPurpuseEntity.Entity is SwitchEntity)
-                            toolTip.Content += $"\nstatus: {(allPurpuseEntity.Entity as SwitchEntity).Status}";
-                    }
-                    toolTip.Content += $"\nx : {allPurpuseEntity.X}\ny : {allPurpuseEntity.Y}";
-                    ellipse.ToolTip = toolTip;
-                    ellipse.Width = CanvasData().Item3;
-                    ellipse.Height = CanvasData().Item3;
-                    ellipse.Fill = allPurpuseEntity.ColorBrush;
-                    ellipse.Stroke = allPurpuseEntity.ColorBrush;
-                    ellipse.StrokeThickness = 1;
-                    // animation
-                    ellipse.Triggers.Add(Enlarge10x(ellipse.Height, ellipse.Width));
-
-                    pz2Canvas.Children.Add(ellipse);
-
-                    Canvas.SetBottom(ellipse, allPurpuseEntity.X * CanvasData().Item3);
-                    Canvas.SetLeft(ellipse, allPurpuseEntity.Y * CanvasData().Item3);
+                    toolTip.Content = $"{allPurpuseEntity.TypeE.ToString()}\n" +
+                                    $"id: {allPurpuseEntity.Entity.Id}\n" +
+                                    $"name: {allPurpuseEntity.Entity.Name}";
+                    if (allPurpuseEntity.Entity is SwitchEntity)
+                        toolTip.Content += $"\nstatus: {(allPurpuseEntity.Entity as SwitchEntity).Status}";
                 }
+                toolTip.Content += $"\nx : {allPurpuseEntity.X}\ny : {allPurpuseEntity.Y}";
+                ellipse.ToolTip = toolTip;
+                ellipse.Width = CanvasData().Item3;
+                ellipse.Height = CanvasData().Item3;
+                ellipse.Fill = allPurpuseEntity.ColorBrush;
+                ellipse.Stroke = allPurpuseEntity.ColorBrush;
+                ellipse.StrokeThickness = 1;
+                // animation
+                ellipse.Triggers.Add(Enlarge10x(ellipse.Height, ellipse.Width));
+
+                pz2Canvas.Children.Add(ellipse);
+
+                Canvas.SetLeft(ellipse, allPurpuseEntity.X * CanvasData().Item3);
+                Canvas.SetTop(ellipse, allPurpuseEntity.Y * CanvasData().Item3);
+
+                stopWatch.Stop();
+                TimeSpan ts = stopWatch.Elapsed;
+                elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                                            ts.Hours, ts.Minutes, ts.Seconds,
+                                            ts.Milliseconds / 10);
                 
             }
-            
-            //Graph graph = new Graph(DataContainers.Containers.AllPurpuseEntities, DataContainers.Containers.GetLines);
-            //AllPurpuseEntity startVertex = DataContainers.Containers.AllPurpuseEntities.ElementAt(0);
-            //var shortestPath = BFSAlg.ShortestPathFunction(graph, startVertex);
-            //foreach (var vertex in DataContainers.Containers.AllPurpuseEntities)
-            //{
-            //    var nodes = shortestPath(vertex);
-            //    if (nodes != null)
-            //    {
-            //        foreach (var node in nodes)
-            //        {
-            //            Ellipse ellipse = new Ellipse();
 
-            //            ellipse.ToolTip = $"{node.TypeE.ToString()}\n" +
-            //                $"name: {node.Entity.Name}\n" +
-            //                $"id: {node.Entity.Id}";
-            //            if (node.Entity is SwitchEntity) // ako je nasledjen tip SwitchEntity
-            //            {
-            //                ellipse.ToolTip += $"\nstatus: {(node.Entity as SwitchEntity).Status}";
-            //            }
-            //            ellipse.Width = CanvasData().Item3;
-            //            ellipse.Height = CanvasData().Item3;
-            //            ellipse.Stroke = node.ColorBrush;
-            //            ellipse.StrokeThickness = 1;
-
-            //            pz2Canvas.Children.Add(ellipse);
-
-            //            Canvas.SetBottom(ellipse, node.X * CanvasData().Item3);
-            //            Canvas.SetLeft(ellipse, node.Y * CanvasData().Item3);
-            //        }
-            //    }
-            //}
+            //XMLLoader.DrawLine();
+            elapsedTime += ".";
         }
         #endregion
 
-       
+        private Tuple<AllPurpuseEntity, AllPurpuseEntity> GetFSEnds(long firstId, long secondId)
+        {
+            AllPurpuseEntity first = null;
+            bool foundedFist = false;
+            AllPurpuseEntity second = null;
+            bool foundedSecond = false;
+            for (int i = 0; i < DataContainers.Containers.AllPurpuseEntities.Count; ++i)
+            {
+                if (foundedFist == true && foundedSecond == true) break;
+
+                if (DataContainers.Containers.AllPurpuseEntities.ElementAt(i).Id == firstId)
+                {
+                    first = DataContainers.Containers.AllPurpuseEntities.ElementAt(i);
+                    foundedFist = true;
+                    continue;
+                }
+
+                if (DataContainers.Containers.AllPurpuseEntities.ElementAt(i).Id == secondId)
+                {
+                    second = DataContainers.Containers.AllPurpuseEntities.ElementAt(i);
+                    foundedSecond = true;
+                }
+            }
+            return new Tuple<AllPurpuseEntity, AllPurpuseEntity>(first, second);
+        }
+
+        private bool CheckCoords(int x, int y)
+        {
+            Coord coord = new Coord(x, y);
+            if (!DataContainers.Containers.AllCord.Any(i => i.X == coord.X && i.Y == coord.Y))
+            {
+                DataContainers.Containers.AllCord.Add(coord);
+                return true;
+            }
+            return false;
+        }
+
+        private void DrawEllipse(LineEntity line, int x, int y)
+        {
+            Ellipse ellipse = new Ellipse();
+            ToolTip toolTip = new ToolTip();
+            toolTip.Background = Brushes.Black;
+            toolTip.Foreground = Brushes.ForestGreen;
+            toolTip.Content = $"id: {line.Id}\n" +
+                            $"name: {line.Name}";
+            toolTip.Content += $"\nx : {x}\ny : {y}";
+            ellipse.ToolTip = toolTip;
+            ellipse.Width = CanvasData().Item3;
+            ellipse.Height = CanvasData().Item3;
+            ellipse.Fill = System.Windows.Media.Brushes.Black;
+            ellipse.Stroke = System.Windows.Media.Brushes.Black;
+            ellipse.StrokeThickness = 1;
+
+            pz2Canvas.Children.Add(ellipse);
+
+            Canvas.SetLeft(ellipse, x * CanvasData().Item3);
+            Canvas.SetTop(ellipse, y * CanvasData().Item3);
+        }
+
+        public void DrawLine()
+        {
+            int num = 0;
+            foreach (var line in DataContainers.Containers.GetLines)
+            {
+                ++num;
+                long firstEnd = line.FirstEnd;
+                long secondEnd = line.SecondEnd;
+
+                var tupple = GetFSEnds(firstEnd, secondEnd);
+                // ako node nije povezan
+                if (tupple.Item1 == null || tupple.Item2 == null)
+                    continue;
+
+                int x1 = tupple.Item1.X;
+                int y1 = tupple.Item1.Y;
+                int x2 = tupple.Item2.X;
+                int y2 = tupple.Item2.Y;
+
+                // ako su u istoj koloni
+                if (x1 == x2)
+                {
+                    if (y1 > y2)
+                    {
+                        for (int y = y1; y > y2; y--)
+                        {
+                            if (CheckCoords(x1, y))
+                            {
+                                DrawEllipse(line, x1, y);
+                            }
+                        }
+                    }
+                    else if (y1 < y2)
+                    {
+                        for (int y = 0; y < y2; y++)
+                        {
+                            if (CheckCoords(x1, y))
+                            {
+                                DrawEllipse(line, x1, y);
+                            }
+                        }
+                    }
+                }
+
+                // ako su u istom redu
+                if (y1 == y2)
+                {
+                    if (x1 > x2)
+                    {
+                        for (int x = x1; x > x2; x--)
+                        {
+                            if (CheckCoords(x, y1))
+                            {
+                                DrawEllipse(line, x, y1);
+                            }
+                        }
+                    }
+                    else if (x1 < x2)
+                    {
+                        for (int x = x1; x < x2; x++)
+                        {
+                            if (CheckCoords(x, y1))
+                            {
+                                DrawEllipse(line, x, y1);
+                            }
+                        }
+                    }
+                }
+
+                // I kvadrant
+                if (x1 < x2 && y1 > y2)
+                {
+                    int x = x1;
+                    for (; x < x2; x++)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            DrawEllipse(line, x, y1);
+                        }
+                    }
+                    for (int y = y1; y > y2; y--)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            DrawEllipse(line, x, y);
+                        }
+                    }
+                }
+
+                // II kvadrant
+                if (x1 > x2 && y1 > y2)
+                {
+                    int x = x1;
+                    for (; x > x2; x--)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            DrawEllipse(line, x, y1);
+                        }
+                    }
+                    for (int y = y1; y > y2; y--)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            DrawEllipse(line, x, y);
+                        }
+                    }
+                }
+
+                // III kvadrant
+                if (x1 > x2 && y1 < y2)
+                {
+                    int x = x1;
+                    for (; x > x2; x--)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            DrawEllipse(line, x, y1);
+                        }
+                    }
+                    for (int y = y1; y < y2; y++)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            DrawEllipse(line, x, y);
+                        }
+                    }
+                }
+
+                // IV kvadrant
+                if (x1 < x2 && y1 < y2)
+                {
+                    int x = x1;
+                    for (; x < x2; x++)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            DrawEllipse(line, x, y1);
+                        }
+                    }
+                    for (int y = y1; y < y2; y++)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            DrawEllipse(line, x, y);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

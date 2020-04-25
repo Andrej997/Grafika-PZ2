@@ -21,6 +21,9 @@ namespace PZ2.DataContainers
         protected static HashSet<LineEntity> lineEntities = new HashSet<LineEntity>(); // 2336
         public static HashSet<LineEntity> GetLines => lineEntities;
 
+        protected static Dictionary<long, LineEntity> lineEntitiesDict = new Dictionary<long, LineEntity>(); // 2336
+        public static Dictionary<long, LineEntity> GetLinesDict => lineEntitiesDict;
+
         protected static HashSet<Point> pointsFromLines = new HashSet<Point>(); // 8747
         public static HashSet<Point> GetPoints => pointsFromLines;
 
@@ -35,6 +38,13 @@ namespace PZ2.DataContainers
         public static HashSet<Func<AllPurpuseEntity, IEnumerable<AllPurpuseEntity>>> AllShortestPathFunction => allShortestPathFunction;
         
         protected static HashSet<Coord> allCords = new HashSet<Coord>();
-        public static HashSet<Coord> GetAllCord => allCords;
+        public static HashSet<Coord> AllCord { get => allCords; set => allCords = value; }
+
+        private static Graph graph;
+        public static Graph Graph { get => graph; set => graph = value; }
+
+        private static Func<AllPurpuseEntity, IEnumerable<AllPurpuseEntity>> shortestPathFunction;
+        public static Func<AllPurpuseEntity, IEnumerable<AllPurpuseEntity>> ShortestPathFunction
+        { get => shortestPathFunction; set => shortestPathFunction = value; }
     }
 }

@@ -17,6 +17,7 @@ using Size = System.Drawing.Size;
 
 using PZ2.DataContainers;
 using System.Windows.Shapes;
+using System.Diagnostics;
 
 namespace PZ2.Controller
 {
@@ -137,6 +138,7 @@ namespace PZ2.Controller
                 l.SecondEnd = long.Parse(node.SelectSingleNode("SecondEnd").InnerText);
 
                 lineEntities.Add(l);
+                lineEntitiesDict.Add(l.Id, l);
 
                 foreach (XmlNode pointNode in node.ChildNodes[9].ChildNodes) // 9 posto je Vertices 9. node u jednom line objektu
                 {
@@ -343,8 +345,7 @@ namespace PZ2.Controller
         }
         #endregion
 
-        #region Set all entities in one big canvas matrix
-
+        #region Set all
         private static AllPurpuseEntity SetCoords(AllPurpuseEntity allPurpuseEntity)
         {
             ToLatLon(allPurpuseEntity.Entity.X, allPurpuseEntity.Entity.Y, 34, out double latitude, out double longitude);
@@ -446,15 +447,371 @@ namespace PZ2.Controller
             foreach (var entity in switchEntities)
                 allPurpuseEntities.Add(SetCoords(new AllPurpuseEntity(entity.Id, entity, EntityType.Switch, System.Windows.Media.Brushes.Green)));
 
-            Graph graph = new Graph(allPurpuseEntities, lineEntities);
-            //var shortestPathFunction_0 = BFSAlg.ShortestPathFunction(graph, allPurpuseEntities.ElementAt(0));
-            //foreach (var node in allPurpuseEntities)
-            //{
-            //    allShortestPathFunction.Add(BFSAlg.ShortestPathFunction(graph, node));
-            //}
+            Graph = new Graph(allPurpuseEntities, lineEntities);
 
-            //InsertLinesInEM();
+        }
+        #endregion
 
+        #region LINE ATTEMPT1
+
+        /// <summary>
+        /// Proverava da li su zauzete koordinate
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private static bool CheckCoords(int x, int y)
+        {
+            Coord coord = new Coord(x, y);
+            if (!allCords.Any(i => i.X == coord.X && i.Y == coord.Y))
+            {
+                allCords.Add(coord);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Daje listu koordita izmedju 2 dva cvora
+        /// </summary>
+        /// <param name="startNode">prvi cvor</param>
+        /// <param name="endNode">drugi cvor</param>
+        /// <returns></returns>
+        private static HashSet<AllPurpuseEntity> SetCoordsForLine(AllPurpuseEntity startNode, AllPurpuseEntity endNode)
+        {
+            HashSet<AllPurpuseEntity> retVal = new HashSet<AllPurpuseEntity>();
+            // ako su u istoj koloni
+            if (startNode.X == endNode.X)
+            {
+                if (startNode.Y > endNode.Y)
+                {
+                    for (int y = startNode.Y; y > endNode.Y; y--)
+                    {
+                        if (CheckCoords(startNode.X, y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(startNode.X, y));
+                        }
+                    }
+                }
+                else if (startNode.Y < endNode.Y)
+                {
+                    for (int y = 0; y < endNode.Y; y++)
+                    {
+                        if (CheckCoords(startNode.X, y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(startNode.X, y));
+                        }
+                    }
+                }
+            }
+
+            // ako su u istom redu
+            if (startNode.Y == endNode.Y)
+            {
+                if (startNode.X > endNode.X)
+                {
+                    for (int x = startNode.X; x > endNode.X; x--)
+                    {
+                        if (CheckCoords(x, startNode.Y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, startNode.Y));
+                        }
+                    }
+                }
+                else if (startNode.X < endNode.X)
+                {
+                    for (int x = startNode.X; x < endNode.X; x++)
+                    {
+                        if (CheckCoords(x, startNode.Y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, startNode.Y));
+                        }
+                    }
+                }
+            }
+
+            // I kvadrant
+            if (startNode.X < endNode.X && startNode.Y > endNode.Y)
+            {
+                int x = startNode.X;
+                for (; x < endNode.X; x++)
+                {
+                    if (CheckCoords(x, startNode.Y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, startNode.Y));
+                    }
+                }
+                for (int y = startNode.Y; y > endNode.Y; y--)
+                {
+                    if (CheckCoords(x, y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, y));
+                    }
+                }
+            }
+
+            // II kvadrant
+            if (startNode.X > endNode.X && startNode.Y > endNode.Y)
+            {
+                int x = startNode.X;
+                for (; x > endNode.X; x--)
+                {
+                    if (CheckCoords(x, startNode.Y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, startNode.Y));
+                    }
+                }
+                for (int y = startNode.Y; y > endNode.Y; y--)
+                {
+                    if (CheckCoords(x, y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, y));
+                    }
+                }
+            }
+
+            // III kvadrant
+            if (startNode.X > endNode.X && startNode.Y < endNode.Y)
+            {
+                int x = startNode.X;
+                for (; x > endNode.X; x--)
+                {
+                    if (CheckCoords(x, startNode.Y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, startNode.Y));
+                    }
+                }
+                for (int y = startNode.Y; y < endNode.Y; y++)
+                {
+                    if (CheckCoords(x, y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, y));
+                    }
+                }
+            }
+
+            // IV kvadrant
+            if (startNode.X < endNode.X && startNode.Y < endNode.Y)
+            {
+                int x = startNode.X;
+                for (; x < endNode.X; x++)
+                {
+                    if (CheckCoords(x, startNode.Y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, startNode.Y));
+                    }
+                }
+                for (int y = startNode.Y; y < endNode.Y; y++)
+                {
+                    if (CheckCoords(x, y))
+                    {
+                        retVal.Add(new AllPurpuseEntity(x, y));
+                    }
+                }
+            }
+
+            return retVal;
+        }
+
+        public static HashSet<Ellipse> SetLine(List<AllPurpuseEntity> path)
+        {
+            HashSet<Ellipse> ellipsesLine = new HashSet<Ellipse>();
+
+            int i = 0;
+            HashSet<AllPurpuseEntity> pathLastLine;
+            if (path.Count == 2)
+                pathLastLine = SetCoordsForLine(path[i], path[++i]);
+            else
+            {
+                for (; i < path.Count - 1; i++)
+                {
+                    var pathLine = SetCoordsForLine(path[i], path[++i]);
+                }
+                pathLastLine = SetCoordsForLine(path[--i], path[path.Count - 1]);
+            }
+
+            return ellipsesLine;
+        }
+
+        #endregion
+
+        #region LINE ATTEMP2
+        private static Tuple<AllPurpuseEntity, AllPurpuseEntity> GetFSEnds(long firstId, long secondId)
+        {
+            AllPurpuseEntity first = null;
+            bool foundedFist = false;
+            AllPurpuseEntity second = null;
+            bool foundedSecond = false;
+            for (int i = 0; i < AllPurpuseEntities.Count; ++i)
+            {
+                if (foundedFist == true && foundedSecond == true) break;
+
+                if (AllPurpuseEntities.ElementAt(i).Id == firstId)
+                {
+                    first = AllPurpuseEntities.ElementAt(i);
+                    foundedFist = true;
+                    continue;
+                }
+
+                if (AllPurpuseEntities.ElementAt(i).Id == secondId)
+                {
+                    second = AllPurpuseEntities.ElementAt(i);
+                    foundedSecond = true;
+                }
+            }
+            return new Tuple<AllPurpuseEntity, AllPurpuseEntity>(first, second);
+        }
+        public static HashSet<AllPurpuseEntity> DrawLine()
+        {
+            HashSet<AllPurpuseEntity> retVal = new HashSet<AllPurpuseEntity>();
+            int num = 0;
+            foreach (var line in GetLines)
+            {
+                ++num;
+                long firstEnd = line.FirstEnd;
+                long secondEnd = line.SecondEnd;
+
+                var tupple = GetFSEnds(firstEnd, secondEnd);
+                // ako node nije povezan
+                if (tupple.Item1 == null || tupple.Item2 == null)
+                    continue;
+
+                int x1 = tupple.Item1.X;
+                int y1 = tupple.Item1.Y;
+                int x2 = tupple.Item2.X;
+                int y2 = tupple.Item2.Y;
+                
+                // ako su u istoj koloni
+                if (x1 == x2)
+                {
+                    if (y1 > y2)
+                    {
+                        for (int y = y1; y > y2; y--)
+                        {
+                            if (CheckCoords(x1, y))
+                            {
+                                retVal.Add(new AllPurpuseEntity(x1, y));
+                            }
+                        }
+                    }
+                    else if (y1 < y2)
+                    {
+                        for (int y = 0; y < y2; y++)
+                        {
+                            if (CheckCoords(x1, y))
+                            {
+                                retVal.Add(new AllPurpuseEntity(x1, y));
+                            }
+                        }
+                    }
+                }
+
+                // ako su u istom redu
+                if (y1 == y2)
+                {
+                    if (x1 > x2)
+                    {
+                        for (int x = x1; x > x2; x--)
+                        {
+                            if (CheckCoords(x, y1))
+                            {
+                                retVal.Add(new AllPurpuseEntity(x, y1));
+                            }
+                        }
+                    }
+                    else if (x1 < x2)
+                    {
+                        for (int x = x1; x < x2; x++)
+                        {
+                            if (CheckCoords(x, y1))
+                            {
+                                retVal.Add(new AllPurpuseEntity(x, y1));
+                            }
+                        }
+                    }
+                }
+
+                // I kvadrant
+                if (x1 < x2 && y1 > y2)
+                {
+                    int x = x1;
+                    for (; x < x2; x++)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y1));
+                        }
+                    }
+                    for (int y = y1; y > y2; y--)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y));
+                        }
+                    }
+                }
+
+                // II kvadrant
+                if (x1 > x2 && y1 > y2)
+                {
+                    int x = x1;
+                    for (; x > x2; x--)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y1));
+                        }
+                    }
+                    for (int y = y1; y > y2; y--)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y));
+                        }
+                    }
+                }
+
+                // III kvadrant
+                if (x1 > x2 && y1 < y2)
+                {
+                    int x = x1;
+                    for (; x > x2; x--)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y1));
+                        }
+                    }
+                    for (int y = y1; y < y2; y++)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y));
+                        }
+                    }
+                }
+
+                // IV kvadrant
+                if (x1 < x2 && y1 < y2)
+                {
+                    int x = x1;
+                    for (; x < x2; x++)
+                    {
+                        if (CheckCoords(x, y1))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y1));
+                        }
+                    }
+                    for (int y = y1; y < y2; y++)
+                    {
+                        if (CheckCoords(x, y))
+                        {
+                            retVal.Add(new AllPurpuseEntity(x, y));
+                        }
+                    }
+                }
+            }
+            return retVal;
         }
         #endregion
 

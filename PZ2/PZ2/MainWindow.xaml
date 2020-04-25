@@ -5,9 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PZ2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="1500" Width="1500">
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
         <Canvas Name="pz2Canvas" Height="1500" Width="1500">
+            <Canvas.RenderTransform>
+                <RotateTransform CenterX="750" CenterY="750" Angle="-90"/> <!-- Rucno rotiran canvas da bi izgledao kao u GMapPocetak projektu-->
+            </Canvas.RenderTransform>
         </Canvas>
     </ScrollViewer>
 </Window>

@@ -43,6 +43,34 @@ namespace PZ2.Model
             ColorBrush = colorBrush;
         }
 
+        /// <summary>
+        /// Constuctor for line
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        public AllPurpuseEntity(int x, int y)
+        {
+            X = x;
+            Y = y;
+            TypeE = EntityType.Line;
+            ColorBrush = Brushes.Black;
+        }
+
+        /// <summary>
+        /// Another constructor for lines
+        /// </summary>
+        /// <param name="lineEntity"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        public AllPurpuseEntity(LineEntity lineEntity, int x, int y)
+        {
+            LineEntity = lineEntity;
+            X = x;
+            Y = y;
+            TypeE = EntityType.Line;
+            ColorBrush = Brushes.Black;
+        }
+
         public PowerEntity Entity
         {
             get => entity;

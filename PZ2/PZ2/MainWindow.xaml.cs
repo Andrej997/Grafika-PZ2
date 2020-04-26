@@ -119,8 +119,8 @@ namespace PZ2
 
                 pz2Canvas.Children.Add(ellipse);
 
-                Canvas.SetLeft(ellipse, allPurpuseEntity.X * CanvasData().Item3);
-                Canvas.SetTop(ellipse, allPurpuseEntity.Y * CanvasData().Item3);
+                Canvas.SetBottom(ellipse, allPurpuseEntity.X * CanvasData().Item3);
+                Canvas.SetLeft(ellipse, allPurpuseEntity.Y * CanvasData().Item3);
 
                 stopWatch.Stop();
                 TimeSpan ts = stopWatch.Elapsed;
@@ -245,8 +245,8 @@ namespace PZ2
 
             pz2Canvas.Children.Add(rectangle);
 
-            Canvas.SetLeft(rectangle, x * CanvasData().Item3);
-            Canvas.SetTop(rectangle, y * CanvasData().Item3);
+            Canvas.SetBottom(rectangle, x * CanvasData().Item3);
+            Canvas.SetLeft(rectangle, y * CanvasData().Item3);
         }
 
         public void DrawLine()

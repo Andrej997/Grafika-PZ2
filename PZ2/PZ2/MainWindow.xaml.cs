@@ -1,22 +1,12 @@
-﻿using GMap.NET.MapProviders;
-using PZ2.Controller;
-using PZ2.Model;
+﻿using PZ2.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace PZ2
@@ -30,7 +20,6 @@ namespace PZ2
         public MainWindow()
         {
             InitializeComponent();
-            //WindowStartupLocation = WindowStartupLocation.CenterScreen;
             #region SetData
             int circleNodeWH = 5;
             canvasData = new Tuple<int, int, int>(
@@ -58,15 +47,16 @@ namespace PZ2
         /// Item3 = circleNodeWH
         /// </returns>
         public static Tuple<int, int, int> CanvasData() => canvasData;
-
+        
+        #region Draw Circles
         private EventTrigger Enlarge10x(double height, double width)
         {
             // za sirinu
-            DoubleAnimation doubleAnimation = new DoubleAnimation(width, width*10, new Duration(TimeSpan.FromMilliseconds(800)));
+            DoubleAnimation doubleAnimation = new DoubleAnimation(width, width * 10, new Duration(TimeSpan.FromMilliseconds(800)));
             doubleAnimation.AutoReverse = true; // vrati na pocetno
             doubleAnimation.AccelerationRatio = 0.5; // ubzanje
             Storyboard.SetTargetProperty(doubleAnimation, new PropertyPath("Width"));
-            
+
             // za visinu
             DoubleAnimation doubleAnimation2 = new DoubleAnimation(height, height * 10, new Duration(TimeSpan.FromMilliseconds(800)));
             doubleAnimation2.AutoReverse = true;
@@ -86,12 +76,6 @@ namespace PZ2
             return eventTrigger;
         }
 
-        #region Draw Circles
-        private void DrawLine(List<AllPurpuseEntity> path)
-        {
-            //var ellipsesLine = XMLLoader.SetLine(path);
-        }
-        
         private void DrawCircle()
         {
             Stopwatch stopWatch = new Stopwatch();
@@ -100,8 +84,9 @@ namespace PZ2
             string elapsedTime = "";
             foreach (var allPurpuseEntity in DataContainers.Containers.AllPurpuseEntities)
             {
-                // za BFS
-                //var connectedNodes = BFSAlg.BFS(DataContainers.Containers.Graph, allPurpuseEntity);
+                ++num;
+                #region Najkrace putanje preko bfs-a
+                //var bfs = BFSAlg.BFS(DataContainers.Containers.Graph, allPurpuseEntity);
                 //var visitedNodes = BFSAlg.VisitedNodes(DataContainers.Containers.Graph, allPurpuseEntity);
                 //foreach (var visitedNode in visitedNodes)
                 //{
@@ -109,9 +94,8 @@ namespace PZ2
                 //    if (path.Count > 1) // necemo da nista da radimo ako nema putanje
                 //        DrawLine(path);
                 //}
-                //
-                
-                ++num;
+                #endregion
+
                 Ellipse ellipse = new Ellipse();
                 ToolTip toolTip = new ToolTip();
                 toolTip.Background = Brushes.Black;
@@ -124,7 +108,6 @@ namespace PZ2
                     if (allPurpuseEntity.Entity is SwitchEntity)
                         toolTip.Content += $"\nstatus: {(allPurpuseEntity.Entity as SwitchEntity).Status}";
                 }
-                toolTip.Content += $"\nx : {allPurpuseEntity.X}\ny : {allPurpuseEntity.Y}";
                 ellipse.ToolTip = toolTip;
                 ellipse.Width = CanvasData().Item3;
                 ellipse.Height = CanvasData().Item3;
@@ -146,12 +129,25 @@ namespace PZ2
                                             ts.Milliseconds / 10);
                 
             }
-
-            //XMLLoader.DrawLine();
             elapsedTime += ".";
         }
         #endregion
 
+        #region Draw Line
+        private void DrawLine(List<AllPurpuseEntity> path)
+        {
+            //var ellipsesLine = XMLLoader.SetLine(path);
+        }
+
+        /// <summary>
+        /// Pronadji oba node-a
+        /// </summary>
+        /// <param name="firstId"></param>
+        /// <param name="secondId"></param>
+        /// <returns>
+        /// Item1 : Node with firstId
+        /// Item2 : Node with secondId
+        /// </returns>
         private Tuple<AllPurpuseEntity, AllPurpuseEntity> GetFSEnds(long firstId, long secondId)
         {
             AllPurpuseEntity first = null;
@@ -178,6 +174,12 @@ namespace PZ2
             return new Tuple<AllPurpuseEntity, AllPurpuseEntity>(first, second);
         }
 
+        /// <summary>
+        /// Provera da li su koordinate zauzete
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
         private bool CheckCoords(int x, int y)
         {
             Coord coord = new Coord(x, y);
@@ -189,34 +191,68 @@ namespace PZ2
             return false;
         }
 
-        private void DrawEllipse(LineEntity line, int x, int y)
+        /// <summary>
+        /// Proveri okolne X koordinate, da nije presesk
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool CheckY(int x, int y)
         {
-            Ellipse ellipse = new Ellipse();
+                    if (DataContainers.Containers.AllCord.Any(i => i.X == x - 1 && i.Y == y) == true)
+                        if (DataContainers.Containers.AllCord.Any(i => i.X == x + 1 && i.Y == y) == true)
+                            return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Proveri okolne Y koordinate, da nije presesk
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool CheckX(int x, int y)
+        {
+            if (DataContainers.Containers.AllCord.Any(i => i.X == x && i.Y == y - 1) == true)
+                if (DataContainers.Containers.AllCord.Any(i => i.X == x && i.Y == y + 1) == true)
+                            return true;
+            return false;
+        }
+
+        private void DrawRectangle(LineEntity line, int x, int y, bool presek = false)
+        {
+            Rectangle rectangle = new Rectangle();
             ToolTip toolTip = new ToolTip();
             toolTip.Background = Brushes.Black;
             toolTip.Foreground = Brushes.ForestGreen;
             toolTip.Content = $"id: {line.Id}\n" +
                             $"name: {line.Name}";
-            toolTip.Content += $"\nx : {x}\ny : {y}";
-            ellipse.ToolTip = toolTip;
-            ellipse.Width = CanvasData().Item3;
-            ellipse.Height = CanvasData().Item3;
-            ellipse.Fill = System.Windows.Media.Brushes.Black;
-            ellipse.Stroke = System.Windows.Media.Brushes.Black;
-            ellipse.StrokeThickness = 1;
+            rectangle.ToolTip = toolTip;
+            rectangle.Width = CanvasData().Item3;
+            rectangle.Height = CanvasData().Item3;
+            if (!presek)
+            {
+                rectangle.Fill = System.Windows.Media.Brushes.Black;
+                rectangle.Stroke = System.Windows.Media.Brushes.Black;
+            }
+            else
+            {
+                rectangle.Fill = System.Windows.Media.Brushes.Yellow;
+                rectangle.Stroke = System.Windows.Media.Brushes.Yellow;
+            }
+            rectangle.StrokeThickness = 1;
 
-            pz2Canvas.Children.Add(ellipse);
+            pz2Canvas.Children.Add(rectangle);
 
-            Canvas.SetLeft(ellipse, x * CanvasData().Item3);
-            Canvas.SetTop(ellipse, y * CanvasData().Item3);
+            Canvas.SetLeft(rectangle, x * CanvasData().Item3);
+            Canvas.SetTop(rectangle, y * CanvasData().Item3);
         }
 
         public void DrawLine()
         {
-            int num = 0;
             foreach (var line in DataContainers.Containers.GetLines)
             {
-                ++num;
                 long firstEnd = line.FirstEnd;
                 long secondEnd = line.SecondEnd;
 
@@ -239,17 +275,17 @@ namespace PZ2
                         {
                             if (CheckCoords(x1, y))
                             {
-                                DrawEllipse(line, x1, y);
+                                DrawRectangle(line, x1, y);
                             }
                         }
                     }
                     else if (y1 < y2)
                     {
-                        for (int y = 0; y < y2; y++)
+                        for (int y = y1; y < y2; y++)
                         {
                             if (CheckCoords(x1, y))
                             {
-                                DrawEllipse(line, x1, y);
+                                DrawRectangle(line, x1, y);
                             }
                         }
                     }
@@ -264,7 +300,7 @@ namespace PZ2
                         {
                             if (CheckCoords(x, y1))
                             {
-                                DrawEllipse(line, x, y1);
+                                DrawRectangle(line, x, y1);
                             }
                         }
                     }
@@ -274,7 +310,7 @@ namespace PZ2
                         {
                             if (CheckCoords(x, y1))
                             {
-                                DrawEllipse(line, x, y1);
+                                DrawRectangle(line, x, y1);
                             }
                         }
                     }
@@ -288,14 +324,14 @@ namespace PZ2
                     {
                         if (CheckCoords(x, y1))
                         {
-                            DrawEllipse(line, x, y1);
+                            DrawRectangle(line, x, y1);
                         }
                     }
                     for (int y = y1; y > y2; y--)
                     {
                         if (CheckCoords(x, y))
                         {
-                            DrawEllipse(line, x, y);
+                            DrawRectangle(line, x, y);
                         }
                     }
                 }
@@ -308,14 +344,14 @@ namespace PZ2
                     {
                         if (CheckCoords(x, y1))
                         {
-                            DrawEllipse(line, x, y1);
+                            DrawRectangle(line, x, y1);
                         }
                     }
                     for (int y = y1; y > y2; y--)
                     {
                         if (CheckCoords(x, y))
                         {
-                            DrawEllipse(line, x, y);
+                            DrawRectangle(line, x, y);
                         }
                     }
                 }
@@ -328,14 +364,14 @@ namespace PZ2
                     {
                         if (CheckCoords(x, y1))
                         {
-                            DrawEllipse(line, x, y1);
+                            DrawRectangle(line, x, y1);
                         }
                     }
                     for (int y = y1; y < y2; y++)
                     {
                         if (CheckCoords(x, y))
                         {
-                            DrawEllipse(line, x, y);
+                            DrawRectangle(line, x, y);
                         }
                     }
                 }
@@ -348,18 +384,19 @@ namespace PZ2
                     {
                         if (CheckCoords(x, y1))
                         {
-                            DrawEllipse(line, x, y1);
+                            DrawRectangle(line, x, y1);
                         }
                     }
                     for (int y = y1; y < y2; y++)
                     {
                         if (CheckCoords(x, y))
                         {
-                            DrawEllipse(line, x, y);
+                            DrawRectangle(line, x, y);
                         }
                     }
                 }
             }
         }
+        #endregion
     }
 }

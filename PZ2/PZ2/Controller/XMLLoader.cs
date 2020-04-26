@@ -1,23 +1,12 @@
-﻿using GMap.NET;
-using GMap.NET.WindowsForms;
-using GMap.NET.WindowsForms.Markers;
-using PZ2.Model;
+﻿using PZ2.Model;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
-
-using Brushes = System.Drawing.Brushes;
-using Pen = System.Drawing.Pen;
 using Point = PZ2.Model.Point;
-using Size = System.Drawing.Size;
 
 using PZ2.DataContainers;
 using System.Windows.Shapes;
-using System.Diagnostics;
 
 namespace PZ2.Controller
 {
@@ -217,134 +206,7 @@ namespace PZ2.Controller
             }
         }
         #endregion
-
-        #region Insert in entityMatrix
         
-        private static long GetID(AllPurpuseEntity allPurpuseEntity) 
-            => allPurpuseEntity.Entity != null ? allPurpuseEntity.Entity.Id : allPurpuseEntity.LineEntity.Id;
-        private static void InsertLinesInEM()
-        {
-            //int elementNum = 0;
-            foreach (var line in lineEntities)
-            {
-                //++elementNum;
-                long startID = line.FirstEnd;
-                long finishID = line.SecondEnd;
-                int startRow = 0; // X je red
-                int startCol = 0; // Y je kolona
-                int finishRow = 0;
-                int finishCol = 0;
-
-                for (int i = 0; i < MainWindow.CanvasData().Item1; i++)
-                {
-                    for (int j = 0; j < MainWindow.CanvasData().Item2; j++)
-                    {
-                        if (EntityMatrix[i, j] != null)
-                        {
-                            if (GetID(EntityMatrix[i, j]) == startID)
-                            {
-                                startRow = i;
-                                startCol = j;
-                            }
-                        }
-                        if (EntityMatrix[i, j] != null)
-                        {
-                            if (GetID(EntityMatrix[i, j]) == finishID)
-                            {
-                                finishRow = i;
-                                finishCol = j;
-                            }
-                        }
-                    }
-                }
-
-                if (startRow <= finishRow && startCol >= finishCol) // red | a kolona --
-                {
-                    for (int i = startRow; i <= finishRow; i++)
-                    {
-                        if (EntityMatrix[i, startCol] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[i, startCol] = allPurpuseEntity;
-                        }
-                    }
-
-                    for (int i = finishCol; i <= startCol; i++)
-                    {
-                        if (EntityMatrix[finishRow, i] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[finishRow, i] = allPurpuseEntity;
-                        }
-                    }
-                }
-
-                if (startRow <= finishRow && startCol < finishCol) // red | a kolona --
-                {
-                    for (int i = startRow; i <= finishRow; i++)
-                    {
-                        if (EntityMatrix[i, finishCol] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[i, finishCol] = allPurpuseEntity;
-                        }
-                    }
-
-                    for (int i = startCol; i <= finishCol; i++)
-                    {
-                        if (EntityMatrix[startRow, i] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[startRow, i] = allPurpuseEntity;
-                        }
-                    }
-                }
-
-                if (startRow > finishRow && startCol < finishCol) // red | a kolona --
-                {
-                    for (int i = finishRow; i <= startRow; i++)
-                    {
-                        if (EntityMatrix[i, startCol] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[i, startCol] = allPurpuseEntity;
-                        }
-                    }
-
-                    for (int i = startCol; i <= finishCol; i++)
-                    {
-                        if (EntityMatrix[finishRow, i] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[finishRow, i] = allPurpuseEntity;
-                        }
-                    }
-                }
-
-                if (startRow > finishRow && startCol >= finishCol) // red | a kolona --
-                {
-                    for (int i = finishRow; i <= startRow; i++)
-                    {
-                        if (EntityMatrix[i, startCol] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[i, startCol] = allPurpuseEntity;
-                        }
-                    }
-
-                    for (int i = finishCol; i <= startCol; i++)
-                    {
-                        if (EntityMatrix[finishRow, i] == null)
-                        {
-                            AllPurpuseEntity allPurpuseEntity = new AllPurpuseEntity(line, EntityType.Line, System.Windows.Media.Brushes.Black);
-                            EntityMatrix[finishRow, i] = allPurpuseEntity;
-                        }
-                    }
-                }
-            }
-        }
-        #endregion
-
         #region Set all
         private static AllPurpuseEntity SetCoords(AllPurpuseEntity allPurpuseEntity)
         {
@@ -452,7 +314,7 @@ namespace PZ2.Controller
         }
         #endregion
 
-        #region LINE ATTEMPT1
+        #region BFS
 
         /// <summary>
         /// Proverava da li su zauzete koordinate
@@ -613,206 +475,42 @@ namespace PZ2.Controller
             return retVal;
         }
 
-        public static HashSet<Ellipse> SetLine(List<AllPurpuseEntity> path)
+        public static HashSet<Rectangle> SetLine(List<AllPurpuseEntity> path)
         {
-            HashSet<Ellipse> ellipsesLine = new HashSet<Ellipse>();
+            HashSet<Rectangle> rectangleLine = new HashSet<Rectangle>();
 
             int i = 0;
-            HashSet<AllPurpuseEntity> pathLastLine;
+            HashSet<AllPurpuseEntity> pathLastLine = new HashSet<AllPurpuseEntity>();
             if (path.Count == 2)
+            {
                 pathLastLine = SetCoordsForLine(path[i], path[++i]);
+                foreach (var item in pathLastLine)
+                    rectangleLine.Add(CreateEllipse(item));
+                return rectangleLine;
+            }
             else
             {
                 for (; i < path.Count - 1; i++)
                 {
-                    var pathLine = SetCoordsForLine(path[i], path[++i]);
+                    pathLastLine = SetCoordsForLine(path[i], path[i + 1]);
+                    foreach (var item in pathLastLine)
+                        rectangleLine.Add(CreateEllipse(item));
                 }
-                pathLastLine = SetCoordsForLine(path[--i], path[path.Count - 1]);
             }
 
-            return ellipsesLine;
+            return rectangleLine;
         }
 
-        #endregion
-
-        #region LINE ATTEMP2
-        private static Tuple<AllPurpuseEntity, AllPurpuseEntity> GetFSEnds(long firstId, long secondId)
-        {
-            AllPurpuseEntity first = null;
-            bool foundedFist = false;
-            AllPurpuseEntity second = null;
-            bool foundedSecond = false;
-            for (int i = 0; i < AllPurpuseEntities.Count; ++i)
+        private static Rectangle CreateEllipse(AllPurpuseEntity allPurpuseEntity)
+            => new Rectangle
             {
-                if (foundedFist == true && foundedSecond == true) break;
+                Width = MainWindow.CanvasData().Item3,
+                Height = MainWindow.CanvasData().Item3,
+                Fill = System.Windows.Media.Brushes.Black,
+                Stroke = System.Windows.Media.Brushes.Black,
+                StrokeThickness = 1
+            };
 
-                if (AllPurpuseEntities.ElementAt(i).Id == firstId)
-                {
-                    first = AllPurpuseEntities.ElementAt(i);
-                    foundedFist = true;
-                    continue;
-                }
-
-                if (AllPurpuseEntities.ElementAt(i).Id == secondId)
-                {
-                    second = AllPurpuseEntities.ElementAt(i);
-                    foundedSecond = true;
-                }
-            }
-            return new Tuple<AllPurpuseEntity, AllPurpuseEntity>(first, second);
-        }
-        public static HashSet<AllPurpuseEntity> DrawLine()
-        {
-            HashSet<AllPurpuseEntity> retVal = new HashSet<AllPurpuseEntity>();
-            int num = 0;
-            foreach (var line in GetLines)
-            {
-                ++num;
-                long firstEnd = line.FirstEnd;
-                long secondEnd = line.SecondEnd;
-
-                var tupple = GetFSEnds(firstEnd, secondEnd);
-                // ako node nije povezan
-                if (tupple.Item1 == null || tupple.Item2 == null)
-                    continue;
-
-                int x1 = tupple.Item1.X;
-                int y1 = tupple.Item1.Y;
-                int x2 = tupple.Item2.X;
-                int y2 = tupple.Item2.Y;
-                
-                // ako su u istoj koloni
-                if (x1 == x2)
-                {
-                    if (y1 > y2)
-                    {
-                        for (int y = y1; y > y2; y--)
-                        {
-                            if (CheckCoords(x1, y))
-                            {
-                                retVal.Add(new AllPurpuseEntity(x1, y));
-                            }
-                        }
-                    }
-                    else if (y1 < y2)
-                    {
-                        for (int y = 0; y < y2; y++)
-                        {
-                            if (CheckCoords(x1, y))
-                            {
-                                retVal.Add(new AllPurpuseEntity(x1, y));
-                            }
-                        }
-                    }
-                }
-
-                // ako su u istom redu
-                if (y1 == y2)
-                {
-                    if (x1 > x2)
-                    {
-                        for (int x = x1; x > x2; x--)
-                        {
-                            if (CheckCoords(x, y1))
-                            {
-                                retVal.Add(new AllPurpuseEntity(x, y1));
-                            }
-                        }
-                    }
-                    else if (x1 < x2)
-                    {
-                        for (int x = x1; x < x2; x++)
-                        {
-                            if (CheckCoords(x, y1))
-                            {
-                                retVal.Add(new AllPurpuseEntity(x, y1));
-                            }
-                        }
-                    }
-                }
-
-                // I kvadrant
-                if (x1 < x2 && y1 > y2)
-                {
-                    int x = x1;
-                    for (; x < x2; x++)
-                    {
-                        if (CheckCoords(x, y1))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y1));
-                        }
-                    }
-                    for (int y = y1; y > y2; y--)
-                    {
-                        if (CheckCoords(x, y))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y));
-                        }
-                    }
-                }
-
-                // II kvadrant
-                if (x1 > x2 && y1 > y2)
-                {
-                    int x = x1;
-                    for (; x > x2; x--)
-                    {
-                        if (CheckCoords(x, y1))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y1));
-                        }
-                    }
-                    for (int y = y1; y > y2; y--)
-                    {
-                        if (CheckCoords(x, y))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y));
-                        }
-                    }
-                }
-
-                // III kvadrant
-                if (x1 > x2 && y1 < y2)
-                {
-                    int x = x1;
-                    for (; x > x2; x--)
-                    {
-                        if (CheckCoords(x, y1))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y1));
-                        }
-                    }
-                    for (int y = y1; y < y2; y++)
-                    {
-                        if (CheckCoords(x, y))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y));
-                        }
-                    }
-                }
-
-                // IV kvadrant
-                if (x1 < x2 && y1 < y2)
-                {
-                    int x = x1;
-                    for (; x < x2; x++)
-                    {
-                        if (CheckCoords(x, y1))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y1));
-                        }
-                    }
-                    for (int y = y1; y < y2; y++)
-                    {
-                        if (CheckCoords(x, y))
-                        {
-                            retVal.Add(new AllPurpuseEntity(x, y));
-                        }
-                    }
-                }
-            }
-            return retVal;
-        }
         #endregion
 
         #region Converter

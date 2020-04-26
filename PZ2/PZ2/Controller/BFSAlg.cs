@@ -54,9 +54,54 @@ namespace PZ2.Controller
             return shortestPath;
         }
 
-        public static Dictionary<AllPurpuseEntity, AllPurpuseEntity> BFS(Graph graph, AllPurpuseEntity start)
+        /// <summary>
+        /// Prolazak kroz graf
+        /// </summary>
+        /// <param name="graph"></param>
+        /// <param name="start"></param>
+        /// <returns>
+        /// Item1 : recnik povezanih cvorova
+        /// Item2 : hashset putanje 
+        /// </returns>
+        public static Tuple<Dictionary<AllPurpuseEntity, AllPurpuseEntity>, HashSet<AllPurpuseEntity>> BFS(Graph graph, AllPurpuseEntity start)
         {
-            var visited = new Dictionary<AllPurpuseEntity, AllPurpuseEntity>();
+            var connectedNodes = new Dictionary<AllPurpuseEntity, AllPurpuseEntity>();
+
+            var visited = new HashSet<AllPurpuseEntity>();
+            if (!graph.AdjacencyList.ContainsKey(start))
+                return new Tuple<Dictionary<AllPurpuseEntity, AllPurpuseEntity>, HashSet<AllPurpuseEntity>>(connectedNodes, visited);
+            
+            var queue = new Queue<AllPurpuseEntity>();
+            queue.Enqueue(start);
+
+            while (queue.Count > 0)
+            {
+                var vertex = queue.Dequeue();
+                if (visited.Contains(vertex))
+                    continue;
+                visited.Add(vertex);
+
+                foreach (var neighbor in graph.AdjacencyList[vertex])
+                {
+                    if (connectedNodes.ContainsKey(neighbor))
+                        continue;
+
+                    
+                    connectedNodes[neighbor] = vertex;
+
+                    if (!visited.Contains(neighbor))
+                        queue.Enqueue(neighbor);
+                }
+            }
+            return new Tuple<Dictionary<AllPurpuseEntity, AllPurpuseEntity>, HashSet<AllPurpuseEntity>>(connectedNodes, visited);
+        }
+        
+        public static HashSet<AllPurpuseEntity> VisitedNodes(Graph graph, AllPurpuseEntity start)
+        {
+            var visited = new HashSet<AllPurpuseEntity>();
+
+            if (!graph.AdjacencyList.ContainsKey(start))
+                return visited;
 
             var queue = new Queue<AllPurpuseEntity>();
             queue.Enqueue(start);
@@ -64,14 +109,15 @@ namespace PZ2.Controller
             while (queue.Count > 0)
             {
                 var vertex = queue.Dequeue();
-                foreach (var neighbor in graph.AdjacencyList[vertex])
-                {
-                    if (visited.ContainsKey(neighbor))
-                        continue;
 
-                    visited[neighbor] = vertex;
-                    queue.Enqueue(neighbor);
-                }
+                if (visited.Contains(vertex))
+                    continue;
+
+                visited.Add(vertex);
+
+                foreach (var neighbor in graph.AdjacencyList[vertex])
+                    if (!visited.Contains(neighbor))
+                        queue.Enqueue(neighbor);
             }
 
             return visited;
@@ -101,33 +147,5 @@ namespace PZ2.Controller
 
             return path;
         }
-
-        public static HashSet<AllPurpuseEntity> VisitedNodes(Graph graph, AllPurpuseEntity start)
-        {
-            var visited = new HashSet<AllPurpuseEntity>();
-
-            if (!graph.AdjacencyList.ContainsKey(start))
-                return visited;
-
-            var queue = new Queue<AllPurpuseEntity>();
-            queue.Enqueue(start);
-
-            while (queue.Count > 0)
-            {
-                var vertex = queue.Dequeue();
-
-                if (visited.Contains(vertex))
-                    continue;
-
-                visited.Add(vertex);
-
-                foreach (var neighbor in graph.AdjacencyList[vertex])
-                    if (!visited.Contains(neighbor))
-                        queue.Enqueue(neighbor);
-            }
-
-            return visited;
-        }
-
     }
 }
